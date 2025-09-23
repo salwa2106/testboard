@@ -1,0 +1,17 @@
+# Ignore environment files
+.env
+*.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+
+# IDE files
+.idea/
+
+# Temp files (examples)
+report.xml
+token.txt
