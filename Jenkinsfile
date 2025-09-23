@@ -3,12 +3,13 @@ pipeline {
   options { timestamps() }
 
   environment {
-    // כתובת ה-API (אם Jenkins רץ על אותה מכונה - localhost)
-    BACKEND_BASE = 'http://localhost:8000'
+    // Add Python to PATH
+    PATH = "C:\\Users\\nasal\\AppData\\Local\\Programs\\Python\\Python313;C:\\Users\\nasal\\AppData\\Local\\Programs\\Python\\Python313\\Scripts;${PATH}"
 
+    BACKEND_BASE = 'http://localhost:8000'
     PROJECT_ID   = '1'
-    API_USER     = credentials('testboard_user_email')      // Jenkins Secret Text
-    API_PASS     = credentials('testboard_user_password')   // Jenkins Secret Text
+    API_USER     = credentials('testboard_user_email')
+    API_PASS     = credentials('testboard_user_password')
   }
 
   stages {
@@ -19,6 +20,7 @@ pipeline {
     stage('Create venv & install deps') {
       steps {
         powershell '''
+          python --version
           python -m venv .venv
           .\\.venv\\Scripts\\Activate.ps1
           python -m pip install --upgrade pip
@@ -38,7 +40,7 @@ pipeline {
         '''
       }
       post {
-        always { junit 'report.xml' }   // להציג תוצאות טסטים ב-Jenkins
+        always { junit 'report.xml' }
       }
     }
 
