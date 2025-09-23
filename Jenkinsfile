@@ -19,10 +19,10 @@ pipeline {
 
     stage('Create venv & install deps') {
       steps {
-        powershell '''
+        bat '''
           python --version
           python -m venv .venv
-          .\\.venv\\Scripts\\Activate.ps1
+          call .venv\\Scripts\\activate.bat
           python -m pip install --upgrade pip
           pip install -r requirements.txt
         '''
@@ -31,12 +31,13 @@ pipeline {
 
     stage('Run pytest (produce JUnit)') {
       steps {
-        powershell '''
-          .\\.venv\\Scripts\\Activate.ps1
+        bat '''
+          call .venv\\Scripts\\activate.bat
           pytest --junitxml=report.xml
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "pytest had failures; continuing the pipeline"; $global:BUILD_FAILED=$true
-          }
+          if %ERRORLEVEL% neq 0 (
+            echo pytest had failures; continuing the pipeline
+            set BUILD_FAILED=true
+          )
         '''
       }
       post {
@@ -46,21 +47,18 @@ pipeline {
 
     stage('Get API token') {
       steps {
-        powershell '''
-          $body = @{ email = "$env:API_USER"; password = "$env:API_PASS" } | ConvertTo-Json
-          $resp = Invoke-RestMethod -Method POST -Uri "$env:BACKEND_BASE/api/auth/login" -ContentType "application/json" -Body $body
-          $resp.access_token | Out-File -Encoding ascii token.txt
+        bat '''
+          call .venv\\Scripts\\activate.bat
+          python -c "import requests, json, os; resp = requests.post('%BACKEND_BASE%/api/auth/login', json={'email': '%API_USER%', 'password': '%API_PASS%'}); open('token.txt', 'w').write(resp.json()['access_token'])"
         '''
       }
     }
 
     stage('Upload JUnit to TestBoard') {
       steps {
-        powershell '''
-          $TOKEN = Get-Content token.txt -Raw
-          $headers = @{ Authorization = "Bearer $TOKEN" }
-          $form = @{ file = Get-Item report.xml }
-          Invoke-WebRequest -Method POST -Uri "$env:BACKEND_BASE/api/ingest/junit?project_id=$env:PROJECT_ID" -Headers $headers -Form $form | Out-Null
+        bat '''
+          call .venv\\Scripts\\activate.bat
+          python -c "import requests; token = open('token.txt').read().strip(); requests.post('%BACKEND_BASE%/api/ingest/junit?project_id=%PROJECT_ID%', headers={'Authorization': f'Bearer {token}'}, files={'file': open('report.xml', 'rb')})"
         '''
       }
     }
