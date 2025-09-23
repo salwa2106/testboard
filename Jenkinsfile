@@ -31,14 +31,18 @@ pipeline {
 
     stage('Run pytest (produce JUnit)') {
       steps {
-        bat '''
-          call .venv\\Scripts\\activate.bat
-          pytest --junitxml=report.xml
-          if %ERRORLEVEL% neq 0 (
-            echo pytest had failures; continuing the pipeline
-            set BUILD_FAILED=true
-          )
-        '''
+        script {
+          def result = bat(script: '''
+            call .venv\\Scripts\\activate.bat
+            pytest --junitxml=report.xml
+            exit 0
+          ''', returnStatus: true)
+
+          if (result != 0) {
+            echo "pytest had failures; continuing the pipeline"
+            currentBuild.result = 'UNSTABLE'
+          }
+        }
       }
       post {
         always { junit 'report.xml' }
