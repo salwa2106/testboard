@@ -1,0 +1,15 @@
+# Secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+report.xml
+token.txt
+
+# IDE / OS
+.idea/
+.DS_Store
+Thumbs.db
