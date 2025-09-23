@@ -3,14 +3,12 @@ pipeline {
   options { timestamps() }
 
   environment {
-    // CHANGE this to the URL Jenkins can reach your FastAPI at:
-    // If Jenkins runs on the same Windows machine as your API: http://localhost:8000
-    // If Jenkins runs in Docker on the same machine (Windows/Mac): http://host.docker.internal:8000
+    // כתובת ה-API (אם Jenkins רץ על אותה מכונה - localhost)
     BACKEND_BASE = 'http://localhost:8000'
 
-    PROJECT_ID   = '1'  // your project id in the API
-    API_USER     = credentials('testboard_user_email')      // Jenkins Secret Text: e.g. qa@example.com
-    API_PASS     = credentials('testboard_user_password')   // Jenkins Secret Text: e.g. Secret123!
+    PROJECT_ID   = '1'
+    API_USER     = credentials('testboard_user_email')      // Jenkins Secret Text
+    API_PASS     = credentials('testboard_user_password')   // Jenkins Secret Text
   }
 
   stages {
@@ -21,7 +19,7 @@ pipeline {
     stage('Create venv & install deps') {
       steps {
         powershell '''
-          py -m venv .venv
+          python -m venv .venv
           .\\.venv\\Scripts\\Activate.ps1
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -40,7 +38,7 @@ pipeline {
         '''
       }
       post {
-        always { junit 'report.xml' }   // publish JUnit in Jenkins UI
+        always { junit 'report.xml' }   // להציג תוצאות טסטים ב-Jenkins
       }
     }
 
